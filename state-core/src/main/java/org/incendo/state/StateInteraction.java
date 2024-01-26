@@ -24,6 +24,7 @@
 package org.incendo.state;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import org.apiguardian.api.API;
@@ -114,6 +115,19 @@ public interface StateInteraction<U extends State<U>, V extends Stateful<U, V>> 
         public @This @NonNull Builder<U, V> interaction(final @NonNull Function<V, V> interaction) {
             this.interaction = Objects.requireNonNull(interaction, "interaction");
             return this;
+        }
+
+        /**
+         * Sets the interaction.
+         *
+         * @param interaction interaction
+         * @return {@code this}
+         */
+        public @This @NonNull Builder<U, V> consumer(final @NonNull Consumer<V> interaction) {
+            return this.interaction(stateful -> {
+                interaction.accept(stateful);
+                return stateful;
+            });
         }
 
         /**
