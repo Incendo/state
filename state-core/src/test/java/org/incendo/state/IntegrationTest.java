@@ -103,7 +103,7 @@ class IntegrationTest {
         }
     }
 
-    static final class TestObject extends AbstractStateful<TestState, TestObject> {
+    static final class TestObject extends AbstractLockableStateful<TestState, TestObject> {
 
         private int fooCounter = 0;
 

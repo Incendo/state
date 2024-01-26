@@ -23,56 +23,73 @@
 //
 package org.incendo.state;
 
-import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.common.returnsreceiver.qual.This;
 
 /**
- * A thread-safe implementation of {@link MutableStateful}.
+ * Implementation of {@link AbstractStateful} which can be locked using a {@link ReentrantReadWriteLock}.
  *
  * @param <U> state type
  * @param <V> self-referencing type
  * @since 1.0.0
- * @see AbstractLockableStateful
  */
 @API(status = API.Status.STABLE, since = "1.0.0")
-public abstract class AbstractStateful<U extends State<U>, V extends AbstractStateful<U, V>> implements MutableStateful<U, V> {
+public abstract class AbstractLockableStateful<U extends State<U>, V extends AbstractLockableStateful<U, V>>
+        extends AbstractStateful<U, V> {
 
-    private U state;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Lock readLock = this.lock.readLock();
+    private final Lock writeLock = this.lock.writeLock();
 
     /**
      * Creates a new instance.
      *
      * @param initialState initial state
      */
-    protected AbstractStateful(final @NonNull U initialState) {
-        this.state = Objects.requireNonNull(initialState, "initialState");
+    protected AbstractLockableStateful(final @NonNull U initialState) {
+        super(initialState);
     }
 
     @Override
-    public synchronized @NonNull U state() {
-        return this.state;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public synchronized @This @NonNull V transitionTo(final @NonNull U state) throws IllegalStateTransitionException {
-        Objects.requireNonNull(state, "state");
-        if (!this.canTransitionTo(state)) {
-            throw new IllegalStateTransitionException(this.state, state, this);
+    public @This @NonNull V transition(final @NonNull U currentState, final @NonNull U newState) throws UnexpectedStateException,
+            IllegalStateTransitionException {
+        this.writeLock.lock();
+        try {
+            return super.transition(currentState, newState);
+        } finally {
+            this.writeLock.unlock();
         }
-        this.state = state;
-        return (V) this;
     }
 
     @Override
-    public synchronized @This @NonNull V transition(final @NonNull U currentState, final @NonNull U newState)
-            throws UnexpectedStateException, IllegalStateTransitionException {
-        Objects.requireNonNull(currentState, "currentState");
-        if (!this.state.equals(currentState)) {
-            throw new UnexpectedStateException(States.of(currentState), newState, this);
+    public @This @NonNull V transitionTo(final @NonNull U state) throws IllegalStateTransitionException {
+        this.writeLock.lock();
+        try {
+            return super.transitionTo(state);
+        } finally {
+            this.writeLock.unlock();
         }
-        return this.transitionTo(newState);
+    }
+
+    @Override
+    public @NonNull U state() {
+        this.readLock.lock();
+        try {
+            return super.state();
+        } finally {
+            this.readLock.unlock();
+        }
+    }
+
+    /**
+     * Returns the lock.
+     *
+     * @return the lock
+     */
+    @NonNull ReentrantReadWriteLock lock() {
+        return this.lock;
     }
 }

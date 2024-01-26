@@ -23,6 +23,7 @@
 //
 package org.incendo.state;
 
+import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -38,22 +39,39 @@ record StateInteractionImpl<U extends State<U>, V extends Stateful<U, V>>(
 
     @Override
     public @NonNull V execute() {
-        final U currentState = this.instance.state();
-        if (!this.incomingStates.contains(currentState)) {
-            throw new UnexpectedStateException(this.incomingStates, currentState, this.instance);
+        final Lock lock;
+        if (this.instance instanceof AbstractLockableStateful<?, ?> lockableStateful) {
+            lock = lockableStateful.lock().writeLock();
+        } else {
+            lock = null;
         }
 
-        if (this.shortcircuitStates.contains(currentState)) {
-            return this.instance;
+        if (lock != null) {
+            lock.lock();
         }
 
-        final V result = this.interaction.apply(this.instance);
+        try {
+            final U currentState = this.instance.state();
+            if (!this.incomingStates.contains(currentState)) {
+                throw new UnexpectedStateException(this.incomingStates, currentState, this.instance);
+            }
 
-        final U newState = result.state();
-        if (!this.outgoingStates.contains(newState)) {
-            throw new UnexpectedStateException(this.outgoingStates, newState, result);
+            if (this.shortcircuitStates.contains(currentState)) {
+                return this.instance;
+            }
+
+            final V result = this.interaction.apply(this.instance);
+
+            final U newState = result.state();
+            if (!this.outgoingStates.contains(newState)) {
+                throw new UnexpectedStateException(this.outgoingStates, newState, result);
+            }
+
+            return result;
+        } finally {
+            if (lock != null) {
+                lock.unlock();
+            }
         }
-
-        return result;
     }
 }

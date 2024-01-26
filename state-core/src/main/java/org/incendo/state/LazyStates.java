@@ -46,12 +46,12 @@ final class LazyStates<S extends State<S>> implements States<S> {
     }
 
     @Override
-    public boolean contains(@NonNull final S state) {
+    public boolean contains(final @NonNull S state) {
         return this.backingStates().contains(state);
     }
 
     @Override
-    public @NonNull States<S> withState(@NonNull final S state) {
+    public @NonNull States<S> withState(final @NonNull S state) {
         return this.backingStates().withState(state);
     }
 }
