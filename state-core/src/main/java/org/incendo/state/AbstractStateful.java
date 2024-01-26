@@ -26,48 +26,52 @@ package org.incendo.state;
 import java.util.Objects;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.common.returnsreceiver.qual.This;
 
 /**
  * A thread-safe implementation of {@link MutableStateful}.
  *
- * @param <S> state type
+ * @param <U> state type
+ * @param <V> self-referencing type
  * @since 1.0.0
  */
 @API(status = API.Status.STABLE, since = "1.0.0")
-public abstract class AbstractStateful<S extends State<S>> implements MutableStateful<S> {
+public abstract class AbstractStateful<U extends State<U>, V extends AbstractStateful<U, V>> implements MutableStateful<U, V> {
 
-    private S state;
+    private U state;
 
     /**
      * Creates a new instance.
      *
      * @param initialState initial state
      */
-    protected AbstractStateful(final @NonNull S initialState) {
+    protected AbstractStateful(final @NonNull U initialState) {
         this.state = Objects.requireNonNull(initialState, "initialState");
     }
 
     @Override
-    public final synchronized @NonNull S state() {
+    public final synchronized @NonNull U state() {
         return this.state;
     }
 
     @Override
-    public final synchronized void transitionTo(final @NonNull S state) throws IllegalStateTransitionException {
+    @SuppressWarnings("unchecked")
+    public final synchronized @This @NonNull V transitionTo(final @NonNull U state) throws IllegalStateTransitionException {
         Objects.requireNonNull(state, "state");
         if (!this.canTransitionTo(state)) {
             throw new IllegalStateTransitionException(this.state, state, this);
         }
         this.state = state;
+        return (V) this;
     }
 
     @Override
-    public final synchronized void transition(final @NonNull S currentState, final @NonNull S newState)
+    public final synchronized @This @NonNull V transition(final @NonNull U currentState, final @NonNull U newState)
             throws UnexpectedStateException, IllegalStateTransitionException {
         Objects.requireNonNull(currentState, "currentState");
-        if (!this.state.equals(newState)) {
-            throw new UnexpectedStateException(currentState, newState, this);
+        if (!this.state.equals(currentState)) {
+            throw new UnexpectedStateException(States.of(currentState), newState, this);
         }
-        this.transitionTo(newState);
+        return this.transitionTo(newState);
     }
 }

@@ -36,7 +36,7 @@ public class IllegalStateTransitionException extends IllegalArgumentException {
 
     private final State<?> from;
     private final State<?> to;
-    private final MutableStateful<?> stateful;
+    private final MutableStateful<?, ?> stateful;
 
     /**
      * Creates a new instance.
@@ -48,7 +48,7 @@ public class IllegalStateTransitionException extends IllegalArgumentException {
     public IllegalStateTransitionException(
             final @NonNull State<?> from,
             final @NonNull State<?> to,
-            final @NonNull MutableStateful<?> stateful
+            final @NonNull MutableStateful<?, ?> stateful
     ) {
         super(String.format("Cannot transition from state '%s' to state '%s'", from, to));
         this.from = from;
@@ -79,7 +79,7 @@ public class IllegalStateTransitionException extends IllegalArgumentException {
      *
      * @return stateful instance
      */
-    public @NonNull MutableStateful<?> stateful() {
+    public @NonNull MutableStateful<?, ?> stateful() {
         return this.stateful;
     }
 }

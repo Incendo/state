@@ -25,26 +25,28 @@ package org.incendo.state;
 
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.common.returnsreceiver.qual.This;
 
 /**
  * Something that holds a {@link State} that can be mutated.
  *
  * <p>It is recommended to extend {@link AbstractStateful} when implementing this interface.</p>
  *
- * @param <S> state type
+ * @param <U> state type
+ * @param <V> self-referencing type
  * @since 1.0.0
  */
 @API(status = API.Status.STABLE, since = "1.0.0")
-public interface MutableStateful<S extends State<S>> extends Stateful<S> {
+public interface MutableStateful<U extends State<U>, V extends MutableStateful<U, V>> extends Stateful<U, V> {
 
     /**
      * Creates a new mutable stateful instance with the given {@code initialState}.
      *
-     * @param <S>          state type
+     * @param <U>          state type
      * @param initialState initial state
      * @return the instance
      */
-    static <S extends State<S>> @NonNull MutableStateful<S> of(final @NonNull S initialState) {
+    static <U extends State<U>> @NonNull MutableStateful<U, ?> of(final @NonNull U initialState) {
         return new StatefulImpl<>(initialState);
     }
 
@@ -53,19 +55,31 @@ public interface MutableStateful<S extends State<S>> extends Stateful<S> {
      *
      * @param state new state
      * @throws IllegalStateTransitionException if the state transition is not possible
+     * @return {@code this}
      */
-    void transitionTo(@NonNull S state) throws IllegalStateTransitionException;
+    @This @NonNull V transitionTo(@NonNull U state) throws IllegalStateTransitionException;
 
     /**
      * Attempts to transition from the given {@code currentState} to the given {@code newState}.
      *
      * @param currentState expected current state, the state transition will fail if the current {@link #state()} is different
      * @param newState     new state
+     * @return {@code this}
      * @throws UnexpectedStateException        if the actual {@link #state()} is different form the {@code currentState}
      * @throws IllegalStateTransitionException if the state transition is not possible
      */
-    void transition(@NonNull S currentState, @NonNull S newState) throws
+    @This @NonNull V transition(@NonNull U currentState, @NonNull U newState) throws
             UnexpectedStateException, IllegalStateTransitionException;
+
+    /**
+     * Creates a new interaction builder.
+     *
+     * @return the builder
+     */
+    @SuppressWarnings("unchecked")
+    default StateInteraction.@NonNull Builder<U, V> interact() {
+        return StateInteraction.on((V) this);
+    }
 
     /**
      * Returns an immutable view of this instance.
@@ -74,12 +88,12 @@ public interface MutableStateful<S extends State<S>> extends Stateful<S> {
      *
      * @return immutable view
      */
-    default @NonNull Stateful<S> asImmutable() {
-        final Stateful<S> mutable = this;
-        return new Stateful<S>() {
+    default @NonNull Stateful<U, V> asImmutable() {
+        final Stateful<U, V> mutable = this;
+        return new Stateful<U, V>() {
 
             @Override
-            public @NonNull S state() {
+            public @NonNull U state() {
                 return mutable.state();
             }
         };

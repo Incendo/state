@@ -34,9 +34,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @API(status = API.Status.STABLE, since = "1.0.0")
 public class UnexpectedStateException extends IllegalArgumentException {
 
-    private final State<?> expected;
+    private final States<?> expected;
     private final State<?> actual;
-    private final Stateful<?> stateful;
+    private final Stateful<?, ?> stateful;
 
     /**
      * Creates a new instance.
@@ -46,11 +46,11 @@ public class UnexpectedStateException extends IllegalArgumentException {
      * @param stateful instance that holds the state
      */
     public UnexpectedStateException(
-            final @NonNull State<?> expected,
+            final @NonNull States<?> expected,
             final @NonNull State<?> actual,
-            final @NonNull Stateful<?> stateful
+            final @NonNull Stateful<?, ?> stateful
     ) {
-        super(String.format("Expected state '%s' but was '%s'", expected, actual));
+        super(String.format("Expected states '%s' but was '%s'", expected, actual));
         this.expected = expected;
         this.actual = actual;
         this.stateful = stateful;
@@ -61,7 +61,7 @@ public class UnexpectedStateException extends IllegalArgumentException {
      *
      * @return expected state
      */
-    public @NonNull State<?> expected() {
+    public @NonNull States<?> expected() {
         return this.expected;
     }
 
@@ -79,7 +79,7 @@ public class UnexpectedStateException extends IllegalArgumentException {
      *
      * @return stateful instance
      */
-    public @NonNull Stateful<?> stateful() {
+    public @NonNull Stateful<?, ?> stateful() {
         return this.stateful;
     }
 }

@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -53,5 +54,10 @@ record StatesImpl<S extends State<S>>(@NonNull Collection<@NonNull S> states) im
         final List<S> states = new ArrayList<>(this.states);
         states.add(state);
         return new StatesImpl<>(Collections.unmodifiableCollection(states));
+    }
+
+    @Override
+    public String toString() {
+        return this.states.stream().map(S::toString).collect(Collectors.joining(", ", "(", ")"));
     }
 }

@@ -35,7 +35,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * @since 1.0.0
  */
 @API(status = API.Status.STABLE, since = "1.0.0")
-public interface State<S extends State<S>> extends Stateful<S> {
+public interface State<S extends State<S>> extends Stateful<S, S> {
 
     /**
      * Returns the transitions that are possible <i>from</i> this state.

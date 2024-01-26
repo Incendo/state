@@ -7,8 +7,9 @@ indra {
     checkstyle().set(libs.versions.checkstyle)
 
     javaVersions {
+        minimumToolchain(17)
         target(17)
-        testWith(17)
+        testWith().set(setOf(17))
     }
 }
 

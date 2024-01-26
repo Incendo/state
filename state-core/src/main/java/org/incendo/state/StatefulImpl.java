@@ -27,7 +27,7 @@ import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 @API(status = API.Status.INTERNAL, since = "1.0.0")
-final class StatefulImpl<S extends State<S>> extends AbstractStateful<S> {
+final class StatefulImpl<S extends State<S>> extends AbstractStateful<S, StatefulImpl<S>> {
 
     StatefulImpl(final @NonNull S initialState) {
         super(initialState);

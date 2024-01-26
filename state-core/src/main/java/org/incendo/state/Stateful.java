@@ -25,30 +25,32 @@ package org.incendo.state;
 
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.common.returnsreceiver.qual.This;
 
 /**
  * Something that holds a {@link State}.
  *
- * @param <S> state type
+ * @param <U> state type
+ * @param <V> self-referencing type
  * @since 1.0.0
  */
 @FunctionalInterface
 @API(status = API.Status.STABLE, since = "1.0.0")
-public interface Stateful<S extends State<S>> {
+public interface Stateful<U extends State<U>, V extends Stateful<U, V>> {
 
     /**
      * Returns the current state.
      *
      * @return current state
      */
-    @NonNull S state();
+    @NonNull U state();
 
     /**
      * Returns the transitions that are possible <i>from</i> the current {@link #state()}.
      *
      * @return allowed state transitions
      */
-    default @NonNull States<S> allowedTransitions() {
+    default @NonNull States<U> allowedTransitions() {
         return this.state().allowedTransitions();
     }
 
@@ -58,7 +60,7 @@ public interface Stateful<S extends State<S>> {
      * @param state new state
      * @return {@code true} if the state transition is allowed, {@code false} if not
      */
-    default boolean canTransitionTo(final @NonNull S state) {
+    default boolean canTransitionTo(final @NonNull U state) {
         return this.allowedTransitions().contains(state);
     }
 
@@ -66,13 +68,15 @@ public interface Stateful<S extends State<S>> {
      * Fails exceptionally if the current {@link #state()} is different from the given {@code state}.
      *
      * @param state expected state
+     * @return {@code this}
      * @throws UnexpectedStateException if the current {@link #state()} is different from the given {@code state}
      */
-    default void expectState(final @NonNull S state) throws UnexpectedStateException {
-        final S currentState = this.state();
+    @SuppressWarnings("unchecked")
+    default @This @NonNull V expectState(final @NonNull U state) throws UnexpectedStateException {
+        final U currentState = this.state();
         if (currentState.equals(state)) {
-            return;
+            return (V) this;
         }
-        throw new UnexpectedStateException(currentState, state, this);
+        throw new UnexpectedStateException(States.of(state), currentState, this);
     }
 }

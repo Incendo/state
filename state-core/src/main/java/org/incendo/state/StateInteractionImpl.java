@@ -23,26 +23,37 @@
 //
 package org.incendo.state;
 
+import java.util.function.Function;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-@API(status = API.Status.INTERNAL, since = "1.0.0")
-record EmptyStates<S extends State<S>>() implements States<S> {
-
-    static final EmptyStates<?> EMPTY = new EmptyStates<>();
-
-    @Override
-    public boolean contains(final @NonNull S state) {
-        return false;
-    }
-
-    @Override
-    public @NonNull States<S> withState(final @NonNull S state) {
-        return States.of(state);
-    }
+@API(status = API.Status.STABLE, since = "1.0.0")
+record StateInteractionImpl<U extends State<U>, V extends Stateful<U, V>>(
+        @NonNull V instance,
+        @NonNull States<U> incomingStates,
+        @NonNull States<U> outgoingStates,
+        @NonNull States<U> shortcircuitStates,
+        @NonNull Function<V, V> interaction
+) implements StateInteraction<U, V> {
 
     @Override
-    public String toString() {
-        return "()";
+    public @NonNull V execute() {
+        final U currentState = this.instance.state();
+        if (!this.incomingStates.contains(currentState)) {
+            throw new UnexpectedStateException(this.incomingStates, currentState, this.instance);
+        }
+
+        if (this.shortcircuitStates.contains(currentState)) {
+            return this.instance;
+        }
+
+        final V result = this.interaction.apply(this.instance);
+
+        final U newState = result.state();
+        if (!this.outgoingStates.contains(newState)) {
+            throw new UnexpectedStateException(this.outgoingStates, newState, result);
+        }
+
+        return result;
     }
 }
