@@ -60,4 +60,9 @@ record StatesImpl<S extends State<S>>(@NonNull Collection<@NonNull S> states) im
     public String toString() {
         return this.states.stream().map(S::toString).collect(Collectors.joining(", ", "(", ")"));
     }
+
+    @Override
+    public boolean empty() {
+        return this.states.isEmpty();
+    }
 }

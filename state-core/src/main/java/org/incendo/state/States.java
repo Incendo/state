@@ -50,7 +50,7 @@ public interface States<S extends State<S>> {
      * @return the instance
      */
     @SuppressWarnings("unchecked")
-    static <S extends State<S>> @NonNull States<S> empty() {
+    static <S extends State<S>> @NonNull States<S> of() {
         return (States<S>) EmptyStates.EMPTY;
     }
 
@@ -120,4 +120,11 @@ public interface States<S extends State<S>> {
      * @return the new instance
      */
     @NonNull States<S> withState(@NonNull S state);
+
+    /**
+     * Returns whether the state container is empty.
+     *
+     * @return {@code true} if this instance contains no states, else {@code false}
+     */
+    boolean empty();
 }

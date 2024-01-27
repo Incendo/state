@@ -32,6 +32,23 @@ public abstract class AbstractState<S extends AbstractState<S>> implements State
 
     private States<S> allowedTransitions;
 
+    /**
+     * Creates a new instance.
+     *
+     * <p>The allowed states will be configured using {@link #configureAllowedTransitions()}.</p>
+     */
+    protected AbstractState() {
+    }
+
+    /**
+     * Creates a new instance and declares the {@code allowedTransitions}.
+     *
+     * @param allowedTransitions allowed transitions <i>from</i> this state
+     */
+    protected AbstractState(final @NonNull States<S> allowedTransitions) {
+        this.allowedTransitions = allowedTransitions;
+    }
+
     @Override
     public @NonNull States<S> allowedTransitions() {
         if (this.allowedTransitions == null) {
@@ -49,5 +66,7 @@ public abstract class AbstractState<S extends AbstractState<S>> implements State
      *
      * @return allowed transitions
      */
-    protected abstract @NonNull States<S> configureAllowedTransitions();
+    protected @NonNull States<S> configureAllowedTransitions() {
+        return States.of();
+    }
 }

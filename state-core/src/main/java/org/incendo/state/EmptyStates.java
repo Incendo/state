@@ -42,6 +42,11 @@ record EmptyStates<S extends State<S>>() implements States<S> {
     }
 
     @Override
+    public boolean empty() {
+        return true;
+    }
+
+    @Override
     public String toString() {
         return "()";
     }

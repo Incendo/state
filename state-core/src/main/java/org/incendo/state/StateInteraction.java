@@ -66,7 +66,7 @@ public interface StateInteraction<U extends State<U>, V extends Stateful<U, V>> 
             this.instance = Objects.requireNonNull(instance, "instance");
             this.incomingStates = States.of(instance.state());
             this.outgoingStates = instance.allowedTransitions();
-            this.shortCircuitStates = States.empty();
+            this.shortCircuitStates = States.of();
             this.interaction = UnaryOperator.identity();
         }
 

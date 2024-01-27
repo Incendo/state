@@ -44,12 +44,21 @@ public interface State<S extends State<S>> extends Stateful<S, S> {
      */
     @Override
     default @NonNull States<S> allowedTransitions() {
-        return States.empty();
+        return States.of();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     default @NonNull S state() {
         return (S) this;
+    }
+
+    /**
+     * Returns whether this state is a terminal state.
+     *
+     * @return {@code true} if this state is terminal, {@code false} if not
+     */
+    default boolean terminal() {
+        return this.allowedTransitions().empty();
     }
 }

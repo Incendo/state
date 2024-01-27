@@ -92,7 +92,7 @@ class IntegrationTest {
             INTERMEDIARY_FOO.allowedTransitions = States.ofEnum(INTERMEDIARY_FOO, INTERMEDIARY_BAR);
             INTERMEDIARY_BAR.allowedTransitions = States.of(INTERMEDIARY_BAZ, END_STATE);
             INTERMEDIARY_BAZ.allowedTransitions = States.of(END_STATE);
-            END_STATE.allowedTransitions = States.empty();
+            END_STATE.allowedTransitions = States.of();
         }
 
         private States<TestState> allowedTransitions;
