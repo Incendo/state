@@ -52,12 +52,13 @@ record StateInteractionImpl<U extends State<U>, V extends Stateful<U, V>>(
 
         try {
             final U currentState = this.instance.state();
-            if (!this.incomingStates.contains(currentState)) {
-                throw new UnexpectedStateException(this.incomingStates, currentState, this.instance);
-            }
 
             if (this.shortcircuitStates.contains(currentState)) {
                 return this.instance;
+            }
+
+            if (!this.incomingStates.contains(currentState)) {
+                throw new UnexpectedStateException(this.incomingStates, currentState, this.instance);
             }
 
             final V result = this.interaction.apply(this.instance);
