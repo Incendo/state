@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -127,4 +128,11 @@ public interface States<S extends State<S>> {
      * @return {@code true} if this instance contains no states, else {@code false}
      */
     boolean empty();
+
+    /**
+     * Returns a stream of the stateCollection contained in this instance
+     *
+     * @return the stateCollection
+     */
+    @NonNull Stream<S> states();
 }

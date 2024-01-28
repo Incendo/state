@@ -25,6 +25,7 @@ package org.incendo.state;
 
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -58,5 +59,10 @@ final class LazyStates<S extends State<S>> implements States<S> {
     @Override
     public boolean empty() {
         return this.backingStates().empty();
+    }
+
+    @Override
+    public @NonNull Stream<S> states() {
+        return this.backingStates().states();
     }
 }

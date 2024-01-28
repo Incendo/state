@@ -30,15 +30,16 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 @API(status = API.Status.INTERNAL, since = "1.0.0")
-record StatesImpl<S extends State<S>>(@NonNull Collection<@NonNull S> states) implements States<S> {
+record StatesImpl<S extends State<S>>(@NonNull Collection<@NonNull S> stateCollection) implements States<S> {
 
     @Override
     public boolean contains(final @NonNull S state) {
-        return this.states.contains(state);
+        return this.stateCollection.contains(state);
     }
 
     @Override
@@ -47,22 +48,27 @@ record StatesImpl<S extends State<S>>(@NonNull Collection<@NonNull S> states) im
         Objects.requireNonNull(state, "state");
         if (state instanceof Enum<?>) {
             // Special case so that we preserve the EnumSet.
-            final EnumSet enumSet = EnumSet.copyOf((Collection) this.states);
+            final EnumSet enumSet = EnumSet.copyOf((Collection) this.stateCollection);
             enumSet.add(state);
             return new StatesImpl<>(Collections.unmodifiableCollection(enumSet));
         }
-        final List<S> states = new ArrayList<>(this.states);
+        final List<S> states = new ArrayList<>(this.stateCollection);
         states.add(state);
         return new StatesImpl<>(Collections.unmodifiableCollection(states));
     }
 
     @Override
     public String toString() {
-        return this.states.stream().map(S::toString).collect(Collectors.joining(", ", "(", ")"));
+        return this.stateCollection.stream().map(S::toString).collect(Collectors.joining(", ", "(", ")"));
     }
 
     @Override
     public boolean empty() {
-        return this.states.isEmpty();
+        return this.stateCollection.isEmpty();
+    }
+
+    @Override
+    public @NonNull Stream<S> states() {
+        return this.stateCollection.stream();
     }
 }

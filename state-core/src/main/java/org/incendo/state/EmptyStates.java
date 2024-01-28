@@ -23,6 +23,7 @@
 //
 package org.incendo.state;
 
+import java.util.stream.Stream;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -49,5 +50,10 @@ record EmptyStates<S extends State<S>>() implements States<S> {
     @Override
     public String toString() {
         return "()";
+    }
+
+    @Override
+    public @NonNull Stream<S> states() {
+        return Stream.empty();
     }
 }
