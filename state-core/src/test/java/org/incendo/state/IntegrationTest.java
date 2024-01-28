@@ -68,7 +68,8 @@ class IntegrationTest {
                 .outgoingStates(States.of(TestState.INTERMEDIARY_FOO))
                 .shortCircuitStates(States.of(TestState.INTERMEDIARY_FOO))
                 .interaction(instance -> instance.foo().transitionTo(TestState.INTERMEDIARY_FOO))
-                .execute();
+                .execute()
+                .unwrap();
     }
 
     private @NonNull TestObject end(final @NonNull TestObject object) {
@@ -76,7 +77,8 @@ class IntegrationTest {
                 .outgoingStates(States.of(TestState.END_STATE))
                 .shortCircuitStates(States.of(TestState.END_STATE))
                 .interaction(instance -> instance.transitionTo(TestState.END_STATE))
-                .execute();
+                .execute()
+                .unwrap();
     }
 
     enum TestState implements State<TestState> {

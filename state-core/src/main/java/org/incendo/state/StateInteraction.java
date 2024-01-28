@@ -25,8 +25,6 @@ package org.incendo.state;
 
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.common.returnsreceiver.qual.This;
@@ -49,9 +47,11 @@ public interface StateInteraction<U extends State<U>, V extends Stateful<U, V>> 
     /**
      * Executes the interaction.
      *
+     * <p>Any checked exceptions will be wrapped in {@link RuntimeException}.</p>
+     *
      * @return the result of the interaction
      */
-    @NonNull V execute();
+    @NonNull InteractionResult<U, V> execute();
 
     final class Builder<U extends State<U>, V extends Stateful<U, V>> implements StateInteraction<U, V> {
 
@@ -60,14 +60,14 @@ public interface StateInteraction<U extends State<U>, V extends Stateful<U, V>> 
         private States<U> incomingStates;
         private States<U> outgoingStates;
         private States<U> shortCircuitStates;
-        private Function<V, V> interaction;
+        private Interaction<U, V> interaction;
 
         private Builder(final @NonNull V instance) {
             this.instance = Objects.requireNonNull(instance, "instance");
             this.incomingStates = States.of(instance.state());
             this.outgoingStates = instance.allowedTransitions();
             this.shortCircuitStates = States.of();
-            this.interaction = UnaryOperator.identity();
+            this.interaction = Interaction.identity();
         }
 
         /**
@@ -112,7 +112,7 @@ public interface StateInteraction<U extends State<U>, V extends Stateful<U, V>> 
          * @param interaction interaction
          * @return {@code this}
          */
-        public @This @NonNull Builder<U, V> interaction(final @NonNull Function<V, V> interaction) {
+        public @This @NonNull Builder<U, V> interaction(final @NonNull Interaction<U, V> interaction) {
             this.interaction = Objects.requireNonNull(interaction, "interaction");
             return this;
         }
@@ -151,8 +151,98 @@ public interface StateInteraction<U extends State<U>, V extends Stateful<U, V>> 
          * @return the result of the interaction
          */
         @Override
-        public @NonNull V execute() {
+        public @NonNull InteractionResult<U, V> execute() {
             return this.build().execute();
+        }
+    }
+
+    @FunctionalInterface
+    interface Interaction<U extends State<U>, V extends Stateful<U, V>> {
+
+        /**
+         * Returns an interaction that immediately returns the incoming stateful.
+         *
+         * @param <U> state type
+         * @param <V> stateful type
+         * @return identity interaction
+         */
+        static <U extends State<U>, V extends Stateful<U, V>> @NonNull Interaction<U, V> identity() {
+            return interaction -> interaction;
+        }
+
+        /**
+         * Performs the interaction.
+         *
+         * @param stateful stateful instance to perform interaction on
+         * @return result of the interaction
+         */
+        @NonNull V interact(@NonNull V stateful) throws Throwable;
+    }
+
+    sealed interface InteractionResult<U extends State<U>, V extends Stateful<U, V>> {
+
+        /**
+         * Returns the stateful instance involved in the interaction.
+         *
+         * @return stateful instance
+         */
+        @NonNull V instance();
+
+        /**
+         * Unwraps the result.
+         *
+         * @return the result of the interaction
+         */
+        @NonNull V unwrap();
+
+        record ShortCircuited<U extends State<U>, V extends Stateful<U, V>>(
+                @NonNull V instance
+        ) implements InteractionResult<U, V> {
+
+            @Override
+            public @NonNull V unwrap() {
+                return this.instance;
+            }
+        }
+
+        record Succeeded<U extends State<U>, V extends Stateful<U, V>>(
+                @NonNull V instance,
+                @NonNull V result
+        ) implements InteractionResult<U, V> {
+
+            @Override
+            public @NonNull V unwrap() {
+                return this.result;
+            }
+        }
+
+        sealed interface Failed<U extends State<U>, V extends Stateful<U, V>> extends InteractionResult<U, V> {
+
+            /**
+             * Returns the exception produced by the interaction.
+             *
+             * @return interaction exception
+             */
+            @NonNull UnexpectedStateException exception();
+
+            @Override
+            default @NonNull V unwrap() {
+                throw this.exception();
+            }
+
+            record IllegalIncomingState<U extends State<U>, V extends Stateful<U, V>>(
+                    @NonNull V instance,
+                    @NonNull UnexpectedStateException exception
+            ) implements Failed<U, V> {
+            }
+
+            record IllegalOutgoingState<U extends State<U>, V extends Stateful<U, V>>(
+                    @NonNull V instance,
+                    @NonNull V result,
+                    @NonNull UnexpectedStateException exception
+            ) implements Failed<U, V> {
+
+            }
         }
     }
 }

@@ -24,7 +24,6 @@
 package org.incendo.state;
 
 import java.util.concurrent.locks.Lock;
-import java.util.function.Function;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -34,11 +33,11 @@ record StateInteractionImpl<U extends State<U>, V extends Stateful<U, V>>(
         @NonNull States<U> incomingStates,
         @NonNull States<U> outgoingStates,
         @NonNull States<U> shortcircuitStates,
-        @NonNull Function<V, V> interaction
+        @NonNull Interaction<U, V> interaction
 ) implements StateInteraction<U, V> {
 
     @Override
-    public @NonNull V execute() {
+    public @NonNull InteractionResult<U, V> execute() {
         final Lock lock;
         if (this.instance instanceof AbstractLockableStateful<?, ?> lockableStateful) {
             lock = lockableStateful.lock().writeLock();
@@ -54,21 +53,36 @@ record StateInteractionImpl<U extends State<U>, V extends Stateful<U, V>>(
             final U currentState = this.instance.state();
 
             if (this.shortcircuitStates.contains(currentState)) {
-                return this.instance;
+                return new InteractionResult.ShortCircuited<>(this.instance);
             }
 
             if (!this.incomingStates.contains(currentState)) {
-                throw new UnexpectedStateException(this.incomingStates, currentState, this.instance);
+                return new InteractionResult.Failed.IllegalIncomingState<>(
+                        this.instance,
+                        new UnexpectedStateException(this.incomingStates, currentState, this.instance)
+                );
             }
 
-            final V result = this.interaction.apply(this.instance);
+            final V result;
+
+            try {
+                result = this.interaction.interact(this.instance);
+            } catch (final RuntimeException e) {
+                throw e;
+            } catch (final Throwable throwable) {
+                throw new RuntimeException(throwable);
+            }
 
             final U newState = result.state();
             if (!this.outgoingStates.contains(newState)) {
-                throw new UnexpectedStateException(this.outgoingStates, newState, result);
+                return new InteractionResult.Failed.IllegalOutgoingState<>(
+                        this.instance,
+                        result,
+                        new UnexpectedStateException(this.outgoingStates, newState, result)
+                );
             }
 
-            return result;
+            return new InteractionResult.Succeeded<>(this.instance, result);
         } finally {
             if (lock != null) {
                 lock.unlock();
