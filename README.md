@@ -22,6 +22,6 @@ Snapshots are available on the Sonatype Snapshots Repository:
 <dependency>
     <groupId>org.incendo</groupId>
     <artifactId>state-core</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
